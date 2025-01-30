@@ -60,8 +60,8 @@ const generateEmbedToken = async ( report: PowerBiReportDetails, user: Authentic
   // Define roles específicos según el rol de la aplicación
   const roleForRLS =
     user.role === 'teacher'
-      ? 'FiltroMatricula'
-      : 'FiltroMatriculaAlumno';
+      ? 'FiltroMentor'
+      : 'FiltroAlumno';
 
   const body = {
     reports: [ { id: report.reportId, groupId: config.workspaceId } ],
