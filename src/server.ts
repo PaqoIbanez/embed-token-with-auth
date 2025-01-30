@@ -42,9 +42,10 @@ app.use( cookieParser() ); // <--- para parsear cookies
 app.set( 'trust proxy', 1 ); // Para evitar el error "ValidationError: The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false ..."
 app.use( helmet() ); // Añade cabeceras de seguridad
 app.use( cors( {
-  origin: config.allowedDomains,
-  credentials: true, // <--- necesario para enviar cookies al front
+  origin: config.allowedDomains, // ['https://tu-frontend.com']
+  credentials: true,            // necesario para enviar cookies
 } ) );
+
 
 // Validación de dominio manual
 app.use( ( req, res, next ) => {
@@ -64,9 +65,9 @@ app.post( '/login', apiLimiter, async ( req: Request, res: Response ) => {
     // Usar la versión cookie-based
     res.cookie( 'token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 1000, // 1 hora
+      secure: true,     // en producción, con HTTPS
+      sameSite: 'none', // necesario para que la cookie se envíe cross-site
+      maxAge: 60 * 60 * 1000,
     } );
 
     // O devuelves algo simple en el body
