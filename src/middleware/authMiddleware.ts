@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/config';
 
@@ -11,19 +11,19 @@ export interface AuthenticatedRequest extends Request {
 }
 
 // Verifica que el token JWT sea válido y adjunta la información del usuario a req.user
-export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const authMiddleware = ( req: AuthenticatedRequest, res: Response, next: NextFunction ) => {
   try {
-    const authorizationHeader = req.headers.authorization;
-    if (!authorizationHeader) {
-      return res.status(401).json({ error: 'Acceso no autorizado, falta token' });
-    }
 
-    const token = authorizationHeader.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ error: 'Acceso no autorizado' });
+    // EJEMPLO (versión nueva):
+    const token = req.cookies?.token;
+    if ( !token ) {
+      return res.status( 401 ).json( { error: 'Acceso no autorizado, falta token' } );
     }
+    // jwt.verify(token)
+    // set req.user
 
-    const decoded = jwt.verify(token, config.jwtSecret) as jwt.JwtPayload;
+
+    const decoded = jwt.verify( token, config.jwtSecret ) as jwt.JwtPayload;
     req.user = {
       email: decoded.email,
       role: decoded.role,
@@ -31,7 +31,7 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
     };
 
     next();
-  } catch (error) {
-    res.status(401).json({ error: 'Token inválido o expirado' });
+  } catch ( error ) {
+    res.status( 401 ).json( { error: 'Token inválido o expirado' } );
   }
 };

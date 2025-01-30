@@ -27,15 +27,19 @@ const serverUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${ port }
 
 // Límite de peticiones para prevenir ataques de fuerza bruta / DDoS
 const apiLimiter = rateLimit( {
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100,                // Límite de peticiones
+  windowMs: 15 * 60 * 1000,
+  max: 200, // Por ejemplo
   standardHeaders: true,
   legacyHeaders: false,
 } );
 
+
+// Después de crear `app`, por ejemplo en tu index.ts:
+
 // ===== MIDDLEWARES GLOBALES =====
 app.use( express.json() );
-app.use( cookieParser() ); // <--- para leer cookies
+app.use( cookieParser() ); // <--- para parsear cookies
+app.set( 'trust proxy', 1 ); // Para evitar el error "ValidationError: The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false ..."
 app.use( helmet() ); // Añade cabeceras de seguridad
 app.use( cors( {
   origin: config.allowedDomains,
@@ -57,26 +61,28 @@ app.post( '/login', apiLimiter, async ( req: Request, res: Response ) => {
     const { email, password } = req.body;
     const token = await new AuthService().authenticateUser( email, password );
 
-    // ===== Emitir cookie HTTP-only =====
+    // Usar la versión cookie-based
     res.cookie( 'token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // En prod, true para HTTPS
-      sameSite: 'strict', // evita envío de cookie en cross-site requests
-      maxAge: 60 * 60 * 1000, // 1 hora (en milisegundos)
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 1000, // 1 hora
     } );
 
-    // Se puede devolver algo simple
-    return res.json( { message: 'Inicio de sesión exitoso' } );
+    // O devuelves algo simple en el body
+    res.json( { message: 'Inicio de sesión exitoso' } );
   } catch ( error ) {
-    return res.status( 401 ).json( { error: 'Autenticación fallida' } );
+    res.status( 401 ).json( { error: 'Autenticación fallida' } );
   }
 } );
+
 
 // Cerrar sesión: limpiar cookie
 app.post( '/logout', ( req: Request, res: Response ) => {
   res.clearCookie( 'token' );
   return res.json( { message: 'Sesión cerrada' } );
 } );
+
 
 // Ruta protegida para verificar si el usuario sigue autenticado (opcional)
 app.get( '/check', apiLimiter, authMiddleware, ( req: AuthenticatedRequest, res: Response ) => {
