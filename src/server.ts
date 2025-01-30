@@ -65,8 +65,10 @@ app.post( '/login', apiLimiter, async ( req: Request, res: Response ) => {
     // Usar la versión cookie-based
     res.cookie( 'token', token, {
       httpOnly: true,
-      secure: true,     // en producción, con HTTPS
-      sameSite: 'none', // necesario para que la cookie se envíe cross-site
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      // Opcional: domain: 'embed-token-with-auth.onrender.com' (normalmente no hace falta si tu backend sirve en ese dominio)
       maxAge: 60 * 60 * 1000,
     } );
 
@@ -80,7 +82,13 @@ app.post( '/login', apiLimiter, async ( req: Request, res: Response ) => {
 
 // Cerrar sesión: limpiar cookie
 app.post( '/logout', ( req: Request, res: Response ) => {
-  res.clearCookie( 'token' );
+  res.clearCookie( 'token', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    path: '/',
+    // domain: 'embed-token-with-auth.onrender.com' (si especificaste domain al crearla)
+  } );
   return res.json( { message: 'Sesión cerrada' } );
 } );
 
